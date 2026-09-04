@@ -33,7 +33,7 @@ compte de quelqu'un d'autre.
 ## Installation
 
 ```bash
-git clone https://github.com/<compte>/devhub-domaines.git
+git clone https://github.com/gricatan/devhub-domaines.git
 cd devhub-domaines/app
 npm install
 npm start
@@ -204,3 +204,9 @@ npm start
 
 Les erreurs de l'interface remontent dans le journal de l'application : pas
 besoin d'ouvrir les devtools pour comprendre un écran muet.
+
+---
+
+## Licence
+
+MIT — voir [LICENSE](LICENSE). Utilise, modifie, redistribue librement.

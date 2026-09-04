@@ -1,7 +1,6 @@
 {
   "name": "devhub-domaines",
   "version": "0.1.0",
-  "private": true,
   "description": "Configure un nom de domaine de bout en bout : choix du nom, zone DNS, tunnel.",
   "main": "main.js",
   "scripts": {
@@ -9,5 +8,14 @@
   },
   "devDependencies": {
     "electron": "^33.0.0"
-  }
+  },
+  "license": "MIT",
+  "author": "Luc Griffon (Gryphon)",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/gricatan/devhub-domaines.git"
+  },
+  "os": [
+    "win32"
+  ]
 }
