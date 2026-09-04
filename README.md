@@ -39,8 +39,18 @@ npm install
 npm start
 ```
 
-`npm install` télécharge Electron (~100 Mo) : compte une minute ou deux la
-première fois.
+`npm install` télécharge Electron : environ 250 Mo, compte une à plusieurs
+minutes selon ta connexion.
+
+**Si `npm start` répond que l'exécutable est introuvable**, c'est que ce
+téléchargement s'est interrompu. `npm install` ne le signale pas : il se
+termine sans erreur alors que le binaire manque. Relance-le seul :
+
+```bash
+node node_modules/electron/install.js
+```
+
+Puis vérifie que `node_modules/electron/dist/electron.exe` existe bien.
 
 ---
 
