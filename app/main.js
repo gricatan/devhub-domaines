@@ -42,9 +42,23 @@ function creerFenetre() {
 
     // Une erreur dans l'interface est invisible sans devtools : on la fait
     // remonter au journal, sinon un ecran muet reste inexplicable.
-    fenetre.webContents.on("console-message", (_e, niveau, message, ligne, source) => {
-        if (niveau < 2) return; // 2 = warning, 3 = error
-        const ou = source ? `${source.split("/").pop()}:${ligne}` : "interface";
+    // Deux signatures coexistent selon la version d'Electron : l'ancienne passe
+    // des arguments positionnels avec un niveau numerique, la nouvelle un seul
+    // objet avec un niveau textuel. On accepte les deux.
+    fenetre.webContents.on("console-message", (...args) => {
+        const e = args[0] || {};
+        const ancien = args.length > 1;
+        const niveau = ancien ? args[1] : e.level;
+        const message = ancien ? args[2] : e.message;
+        const ligne = ancien ? args[3] : e.lineNumber;
+        const source = ancien ? args[4] : e.sourceId;
+
+        const grave = typeof niveau === "number"
+            ? niveau >= 2                                  // 2 = warning, 3 = error
+            : niveau === "warning" || niveau === "error";
+        if (!grave) return;
+
+        const ou = source ? `${String(source).split("/").pop()}:${ligne}` : "interface";
         journal.erreur(`Interface (${ou}) : ${message}`);
     });
 
