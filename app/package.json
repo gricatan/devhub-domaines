@@ -1,0 +1,13 @@
+{
+  "name": "devhub-domaines",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Configure un nom de domaine de bout en bout : choix du nom, zone DNS, tunnel.",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron ."
+  },
+  "devDependencies": {
+    "electron": "^33.0.0"
+  }
+}

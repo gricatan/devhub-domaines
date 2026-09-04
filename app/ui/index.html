@@ -1,0 +1,1073 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>DevHub Domaines</title>
+<style>
+  :root{
+    --fond:#15141c; --carte:#1e1d28; --creux:#272631; --trait:#332f40;
+    --texte:#efedf6; --doux:#a9a6bd; --faible:#726f88;
+    --accent:#4fb3a5; --accent-fonce:#0e1f1d;
+    --ok:#54c48f; --alerte:#dba455; --ko:#e2686d;
+  }
+  *{box-sizing:border-box}
+  body{
+    margin:0; height:100vh; overflow:hidden; background:var(--fond); color:var(--texte);
+    font:15px/1.6 "Segoe UI Variable Text","Segoe UI",system-ui,sans-serif;
+    display:flex; flex-direction:column; align-items:center;
+  }
+  .mono{font-family:"Cascadia Mono",Consolas,monospace}
+
+  header{width:100%;max-width:760px;padding:26px 28px 0;flex-shrink:0}
+  .fil{display:flex;align-items:center}
+  .pas{display:flex;align-items:center;gap:8px;flex:1}
+  .pas:last-child{flex:0}
+  .rond{width:25px;height:25px;border-radius:50%;flex-shrink:0;display:grid;place-items:center;
+    font-size:12px;font-weight:700;background:var(--creux);color:var(--faible);border:1px solid var(--trait)}
+  .pas .nom{font-size:12px;color:var(--faible);white-space:nowrap}
+  .barre{flex:1;height:1px;background:var(--trait);margin:0 9px}
+  .pas.active .rond{background:var(--accent);color:#0c1a18;border-color:var(--accent)}
+  .pas.active .nom{color:var(--texte);font-weight:600}
+  .pas.faite .rond{background:var(--accent-fonce);color:var(--accent);border-color:var(--accent)}
+  .pas.faite .nom{color:var(--doux)}
+
+  main{width:100%;max-width:760px;padding:32px 28px 20px;overflow-y:auto;flex:1}
+  .etape[hidden],[hidden]{display:none !important}
+  h2{margin:0 0 8px;font-size:25px;font-weight:600;letter-spacing:-.02em;line-height:1.2}
+  .intro{margin:0 0 24px;color:var(--doux)}
+  .bloc{background:var(--carte);border:1px solid var(--trait);border-radius:11px;padding:22px 24px;margin-bottom:14px}
+  .bloc h3{margin:0 0 10px;font-size:15px;font-weight:600}
+
+  .choix{display:flex;flex-direction:column;gap:9px;margin-bottom:14px}
+  .opt{display:flex;align-items:flex-start;gap:14px;width:100%;text-align:left;
+    background:var(--carte);border:1px solid var(--trait);border-radius:10px;
+    padding:15px 18px;color:var(--texte);font:inherit;cursor:pointer}
+  .opt:hover:not(:disabled){border-color:var(--accent)}
+  .opt[aria-pressed="true"]{border-color:var(--accent);background:#1c2926}
+  .opt:disabled{opacity:.45;cursor:default}
+  .opt .titre{font-weight:600}
+  .opt .desc{font-size:13px;color:var(--doux);margin-top:3px;line-height:1.45}
+  .opt .coche{margin-left:auto;color:var(--accent);font-size:17px;opacity:0;flex-shrink:0}
+  .opt .actions{margin-left:auto;display:flex;gap:7px;flex-shrink:0;align-self:center}
+  .mini{background:none;border:1px solid var(--trait);border-radius:7px;color:var(--doux);
+        font:inherit;font-size:12.5px;padding:6px 11px;cursor:pointer}
+  .mini:hover:not(:disabled){border-color:var(--accent);color:var(--texte)}
+  .mini:disabled{opacity:.5;cursor:default}
+  .mini.danger{border-color:#5c2c30;color:#e2686d}
+  .mini.danger:hover:not(:disabled){background:#2c1719;border-color:#e2686d;color:#e2686d}
+  header{display:flex;align-items:center;gap:14px}
+  #b-accueil{background:none;border:1px solid var(--trait);border-radius:7px;color:var(--doux);
+             font:inherit;font-size:12.5px;padding:6px 11px;cursor:pointer;flex-shrink:0}
+  #b-accueil:hover{border-color:var(--accent);color:var(--texte)}
+  header .fil{flex:1}
+  .opt[aria-pressed="true"] .coche{opacity:1}
+  .marque{display:inline-block;font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;font-weight:700;
+    padding:2px 7px;border-radius:4px;background:var(--creux);color:var(--faible);margin-left:8px;vertical-align:2px}
+  .m-vite{background:#14291f;color:var(--ok)}
+  .m-lent{background:#2a2415;color:var(--alerte)}
+
+  label{display:block;font-size:13px;color:var(--doux);margin-bottom:6px}
+  input[type=text],input[type=password],select{
+    width:100%;background:var(--creux);border:1px solid var(--trait);border-radius:8px;
+    color:var(--texte);padding:11px 13px;font:inherit;font-size:15px}
+  select{cursor:pointer}
+  input:focus,select:focus{outline:2px solid var(--accent);outline-offset:1px;border-color:transparent}
+  .aide{font-size:13px;color:var(--faible);margin-top:7px}
+  .case{display:flex;align-items:flex-start;gap:10px;margin-top:16px;cursor:pointer}
+  .case input{width:16px;height:16px;margin-top:3px;accent-color:var(--accent);flex-shrink:0}
+  .case .t{font-size:14px}
+  .case .d{font-size:12.5px;color:var(--faible)}
+  .duo{display:flex;gap:10px;align-items:flex-end}
+  .duo > div{flex:1}
+  .duo > button{flex:0 0 auto}
+  .colle{display:flex;align-items:center;gap:0}
+  .colle input{border-radius:8px 0 0 8px;border-right:0}
+  .colle .suffixe{background:var(--trait);border:1px solid var(--trait);border-left:0;border-radius:0 8px 8px 0;
+    padding:11px 13px;color:var(--doux);font-family:"Cascadia Mono",Consolas,monospace;font-size:14px;white-space:nowrap}
+
+  .avis{border-radius:9px;padding:13px 16px;font-size:14px;margin-top:14px;display:none;line-height:1.5;
+        white-space:pre-line}
+  .avis.visible{display:block}
+  .a-ok{background:#14291f;color:var(--ok);border:1px solid #235c44}
+  .a-att{background:#2a2415;color:var(--alerte);border:1px solid #5c4a23}
+  .a-ko{background:#2c1719;color:var(--ko);border:1px solid #5c2c30}
+  .a-info{background:var(--creux);color:var(--doux);border:1px solid var(--trait)}
+
+  .recap{display:flex;flex-direction:column;gap:11px;margin:0}
+  .recap div{display:flex;gap:14px;font-size:14px;align-items:baseline}
+  .recap dt{color:var(--faible);min-width:135px;flex-shrink:0}
+  .recap dd{margin:0}
+  .copiable{background:var(--creux);border:1px solid var(--trait);border-radius:7px;padding:10px 13px;
+    font-family:"Cascadia Mono",Consolas,monospace;font-size:13px;margin-top:8px;word-break:break-all;white-space:pre-line}
+  ol.marche{margin:10px 0 0;padding-left:20px;font-size:14px;color:var(--doux)}
+  ol.marche li{margin-bottom:9px}
+  ol.marche strong{color:var(--texte);font-weight:600}
+
+  footer{width:100%;max-width:760px;padding:16px 28px 24px;flex-shrink:0;
+    border-top:1px solid var(--trait);display:flex;align-items:center;gap:12px}
+  button.principal{background:var(--accent);border:0;border-radius:9px;color:#0c1a18;
+    padding:12px 24px;font:inherit;font-size:15px;font-weight:600;cursor:pointer}
+  button.principal:hover:not(:disabled){filter:brightness(1.09)}
+  button.principal:disabled{background:var(--creux);color:var(--faible);cursor:default;filter:none}
+  button.second{background:none;border:1px solid var(--trait);border-radius:8px;color:var(--texte);
+    padding:11px 16px;font:inherit;font-size:14px;cursor:pointer}
+  button.second:hover:not(:disabled){border-color:var(--accent)}
+  button.second:disabled{opacity:.55;cursor:default}
+  button.retour{background:none;border:0;color:var(--doux);padding:12px 6px;font:inherit;font-size:14px;cursor:pointer}
+  button.retour:hover{color:var(--texte)}
+  .pousse{margin-left:auto}
+
+  /* ---- etat de chargement : on doit voir que ca travaille ---- */
+  button[data-occupe]{position:relative;pointer-events:none}
+  button[data-occupe] .libelle{opacity:.55}
+  button[data-occupe]::after{
+    content:"";position:absolute;top:50%;right:13px;width:13px;height:13px;margin-top:-7px;
+    border:2px solid currentColor;border-right-color:transparent;border-radius:50%;
+    animation:tourne .7s linear infinite;
+  }
+  button[data-occupe]{padding-right:38px}
+  @keyframes tourne{to{transform:rotate(360deg)}}
+  @media (prefers-reduced-motion:reduce){
+    button[data-occupe]::after{animation-duration:2.4s}
+  }
+
+  #lien-detail{background:none;border:0;color:var(--faible);font:inherit;font-size:12.5px;cursor:pointer;text-decoration:underline}
+  #lien-detail:hover{color:var(--doux)}
+  :focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+
+  #detail{position:fixed;right:0;bottom:0;top:0;width:min(520px,80vw);background:#0f0e15;
+    border-left:1px solid var(--trait);padding:20px;overflow-y:auto;
+    font-family:"Cascadia Mono",Consolas,monospace;font-size:11.5px;line-height:1.6}
+  #detail h3{margin:0 0 12px;font-family:inherit;font-size:12px;color:var(--doux);display:flex}
+  #detail button{margin-left:auto;background:none;border:0;color:var(--faible);cursor:pointer;font:inherit}
+  .l{display:flex;gap:9px;padding:2px 0}
+  .l time{color:var(--faible);flex-shrink:0}
+  .n-info,.n-action{color:var(--doux)}
+  .n-succes{color:var(--ok)} .n-avertissement{color:var(--alerte)} .n-erreur{color:var(--ko)}
+  .l .txt{word-break:break-word}
+</style>
+</head>
+<body>
+
+<header>
+  <button id="b-accueil" title="Revenir à tes domaines">← Mes domaines</button>
+  <div class="fil" id="fil"></div>
+</header>
+
+<datalist id="idees-nom"></datalist>
+
+<main>
+  <!-- 0 : REPRENDRE -->
+  <section class="etape" id="e-0" hidden>
+    <h2>Tes domaines</h2>
+    <p class="intro">Voilà où en est chacun d'eux.</p>
+    <div class="choix" id="liste-accueil"></div>
+    <div class="avis" id="av-accueil"></div>
+    <div style="margin-top:6px">
+      <button class="second" id="b-nouveau"><span class="libelle">Configurer un autre domaine</span></button>
+    </div>
+  </section>
+
+  <!-- 1 : SOURCE -->
+  <section class="etape" id="e-1">
+    <h2>D'où vient ton domaine ?</h2>
+    <p class="intro">Si tu n'en as pas encore, il en existe des gratuits. Ils ne se valent pas : certains sont immédiats, d'autres demandent de la patience.</p>
+    <div class="choix" id="sources"></div>
+
+    <div id="bandeau-autre" style="margin-top:4px">
+      <button id="lien-autre" style="background:none;border:0;color:var(--faible);font:inherit;
+        font-size:13px;cursor:pointer;text-decoration:underline;padding:4px 0">Autre option</button>
+      <div id="autre-detail" hidden style="margin-top:9px"></div>
+    </div>
+
+    <div class="avis" id="av-source"></div>
+  </section>
+
+  <!-- 2 : COMPTE -->
+  <section class="etape" id="e-2" hidden>
+    <h2>Connecte ton compte Cloudflare</h2>
+    <p class="intro">Cloudflare gère gratuitement les noms de domaine. L'application travaillera sur <strong>ton</strong> compte : rien ne passe par quelqu'un d'autre.</p>
+    <div class="bloc">
+      <button class="principal" id="b-connexion"><span class="libelle">Connecter mon compte Cloudflare</span></button>
+      <p class="aide">Ton navigateur va s'ouvrir. Tu vérifies ce que l'application demande, tu acceptes, et tu reviens ici.</p>
+    </div>
+    <div class="bloc">
+      <label for="jeton">Tu préfères un code d'accès ?</label>
+      <div class="duo">
+        <div><input type="password" id="jeton" placeholder="Coller un jeton d'API Cloudflare"></div>
+        <button class="second" id="b-jeton"><span class="libelle">Utiliser</span></button>
+      </div>
+      <p class="aide">À créer dans ton espace Cloudflare. Cette voie fonctionne aussi, elle demande juste un copier-coller.</p>
+    </div>
+    <!-- Commun aux deux voies : le bloc OAuth peut etre masque. -->
+    <div class="avis" id="av-connexion"></div>
+  </section>
+
+  <!-- 3 : NOM -->
+  <section class="etape" id="e-3" hidden>
+    <h2 id="titre-nom">Choisis ton domaine</h2>
+    <p class="intro" id="intro-nom">C'est l'adresse que les gens taperont dans leur navigateur.</p>
+
+    <!-- domaine deja possede -->
+    <div id="bloc-possede">
+      <div class="choix" id="liste-domaines"></div>
+      <div class="bloc">
+        <label for="nouveau">Ou ajouter un domaine que tu possèdes déjà</label>
+        <div class="duo">
+          <div><input type="text" id="nouveau" placeholder="exemple.fr" spellcheck="false" autocomplete="off"></div>
+          <button class="second" id="b-ajouter"><span class="libelle">Vérifier</span></button>
+        </div>
+        <p class="aide">Le domaine doit t'appartenir. L'application le vérifie avant d'aller plus loin.</p>
+      </div>
+    </div>
+
+    <!-- eu.org -->
+    <div class="bloc" id="bloc-nom-euorg" hidden>
+      <label for="eu-pseudo">Le nom de ton site</label>
+      <div class="duo" style="margin-bottom:14px">
+        <div><input type="text" id="eu-pseudo" placeholder="mon-site" spellcheck="false" autocomplete="off" list="idees-nom"></div>
+      </div>
+      <label for="eu-parent">Sous quelle famille</label>
+      <select id="eu-parent"></select>
+      <p class="aide" id="eu-apercu">Ton domaine sera : <span class="mono">—</span></p>
+      <p class="aide" id="eu-garde"></p>
+      <div style="margin-top:16px">
+        <button class="principal" id="b-eu-creer"><span class="libelle">Préparer ce domaine</span></button>
+      </div>
+    </div>
+
+    <div class="avis" id="av-domaine"></div>
+  </section>
+
+  <!-- 4 : DESTINATION -->
+  <section class="etape" id="e-4" hidden>
+    <h2>Vers quoi doit-il pointer ?</h2>
+    <p class="intro">Ce qui doit répondre quand quelqu'un visitera <span class="mono" id="rappel-domaine"></span>.</p>
+
+    <div class="choix" id="choix-cible">
+      <button class="opt" data-cible="tunnel" aria-pressed="true">
+        <div>
+          <div class="titre">Un service qui tourne sur cet ordinateur<span class="marque m-vite">Recommandé</span></div>
+          <div class="desc">Un tunnel relie ton domaine à ton ordinateur. <strong>Aucun port à ouvrir</strong>, rien à configurer sur ta box, et le HTTPS est automatique.</div>
+        </div>
+        <div class="coche">✓</div>
+      </button>
+      <button class="opt" data-cible="ip" aria-pressed="false">
+        <div>
+          <div class="titre">Un serveur avec une adresse IP</div>
+          <div class="desc">Un VPS ou une machine déjà accessible depuis Internet.</div>
+        </div>
+        <div class="coche">✓</div>
+      </button>
+    </div>
+
+    <div class="bloc" id="bloc-tunnel">
+      <label for="port">Sur quel port tourne ton service ?</label>
+      <input type="text" id="port" placeholder="8080" spellcheck="false" autocomplete="off" value="8080">
+      <p class="aide">Le port sur lequel ton site répond en local. Si tu ouvres <span class="mono">http://localhost:8080</span> dans ton navigateur et que ça marche, c'est le bon.</p>
+      <label class="case">
+        <input type="checkbox" id="tunnel-https">
+        <span><span class="t">Mon service est en HTTPS en local</span><br>
+        <span class="d">À cocher seulement si tu as déjà un certificat sur ta machine. Dans le doute, laisse décoché.</span></span>
+      </label>
+      <div style="margin-top:18px"><button class="principal" id="b-tunnel"><span class="libelle">Monter le tunnel</span></button></div>
+      <p class="aide" id="tunnel-progres" hidden></p>
+      <div class="avis" id="av-tunnel"></div>
+    </div>
+
+    <div class="bloc" id="bloc-ip" hidden>
+      <label for="ip">Adresse du serveur</label>
+      <input type="text" id="ip" placeholder="203.0.113.10" spellcheck="false" autocomplete="off">
+      <p class="aide">Ce serveur doit être joignable depuis Internet, avec le port ouvert.</p>
+      <label class="case">
+        <input type="checkbox" id="proxy" checked>
+        <span><span class="t">Passer par Cloudflare</span><br>
+        <span class="d">Ajoute le HTTPS gratuitement et masque l'adresse de ton serveur. À décocher pour un serveur de jeu ou une connexion SSH.</span></span>
+      </label>
+      <label class="case">
+        <input type="checkbox" id="avec-www" checked>
+        <span><span class="t">Configurer aussi <span class="mono">www</span></span><br>
+        <span class="d">Pour que les deux adresses fonctionnent.</span></span>
+      </label>
+      <div style="margin-top:18px"><button class="principal" id="b-config"><span class="libelle">Configurer</span></button></div>
+      <div class="avis" id="av-config"></div>
+    </div>
+  </section>
+
+  <!-- 5 : VERIFICATION -->
+  <section class="etape" id="e-5" hidden>
+    <h2>Vérification</h2>
+    <p class="intro">L'application interroge elle-même les serveurs, plutôt que de te demander de la croire sur parole.</p>
+    <div class="bloc">
+      <dl class="recap" id="recap-verif"></dl>
+      <div class="avis" id="av-verif"></div>
+      <div style="margin-top:18px"><button class="second" id="b-reverifier"><span class="libelle">Vérifier à nouveau</span></button></div>
+    </div>
+
+    <div class="bloc" id="bloc-euorg" hidden>
+      <h3>Faire la demande sur eu.org</h3>
+      <p class="aide" style="margin-top:0">La zone est prête et répond : c'est justement ce qu'eu.org vérifie avant d'accepter une demande. Le reste se fait sur leur site, à la main — ils traitent chaque demande individuellement.</p>
+      <ol class="marche">
+        <li>Tu te connectes avec ton identifiant eu.org — l'application ne touche jamais à cette page.</li>
+        <li>Elle remplit pour toi le nom de domaine et les serveurs, et signale les champs IP à laisser vides.</li>
+        <li>Tu vérifies, tu coches <strong>Privé</strong>, et c'est toi qui envoies.</li>
+      </ol>
+      <p class="aide">Le traitement est manuel et bénévole : de quelques jours à plusieurs semaines. Surveille tes courriels, indésirables compris.</p>
+      <div class="copiable" id="eu-ns"></div>
+      <div style="margin-top:16px"><button class="principal" id="b-euorg"><span class="libelle">Ouvrir le formulaire pré-rempli</span></button></div>
+      <div class="avis" id="av-euorg"></div>
+    </div>
+
+  </section>
+
+  <!-- 6 : FIN -->
+  <section class="etape" id="e-6" hidden>
+    <h2>C'est en place</h2>
+    <p class="intro">Voici où tu en es.</p>
+    <div class="bloc"><dl class="recap" id="recap-fin"></dl></div>
+    <div class="bloc" id="bloc-fin-tunnel" hidden>
+      <h3>Ton tunnel tourne</h3>
+      <p class="aide" style="margin-top:0">Il reste actif tant que l'application est ouverte. En la fermant, le tunnel s'arrête et ton site n'est plus joignable — c'est volontaire : rien ne tourne dans ton dos.</p>
+      <div style="margin-top:14px"><button class="second" id="b-tunnel-stop"><span class="libelle">Arrêter le tunnel</span></button></div>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <button class="retour" id="b-retour" hidden>← Retour</button>
+  <button id="lien-detail">Voir le détail technique</button>
+  <button class="principal pousse" id="b-suivant" disabled><span class="libelle">Suivant</span></button>
+</footer>
+
+<aside id="detail" hidden>
+  <h3>Détail technique <button id="b-fermer-detail">fermer</button></h3>
+  <div id="journal"></div>
+</aside>
+
+<script>
+  const SOURCES = [
+    { id:"possede", titre:"J'ai déjà un domaine", marque:null, pret:true,
+      desc:"Acheté chez OVH, Gandi, Namecheap… ou déjà présent sur ton compte Cloudflare. L'application le configure et peut le relier à un service qui tourne chez toi." }
+  ];
+
+  // eu.org reste possible mais n'est pas mis en avant : sa demande se depose sur
+  // leur site et l'attente se compte en semaines. Ce n'est pas le chemin normal.
+  const SOURCE_DISCRETE = {
+    id:"euorg", titre:"Un domaine en .eu.org",
+    desc:"Gratuit à vie et prestigieux, mais la demande se dépose sur leur site et la validation, faite à la main par des bénévoles, prend de quelques jours à plusieurs semaines."
+  };
+
+
+  const etat = { pas:0, source:null, connecte:false, zone:null, configFaite:false };
+
+  // Toutes les sources aboutissent a une zone Cloudflare : le parcours est le meme.
+  const parcours = () => [1,2,3,4,5,6];
+  const NOMS = {1:"Domaine",2:"Compte",3:"Nom",4:"Destination",5:"Vérification",6:"Terminé"};
+
+  // ---- occupation d'un bouton : on doit voir que ca travaille ----
+  async function occuper(bouton, texteEnCours, action) {
+    const lib = bouton.querySelector(".libelle");
+    const avant = lib ? lib.textContent : null;
+    bouton.dataset.occupe = "1";
+    if (lib && texteEnCours) lib.textContent = texteEnCours;
+    try {
+      return await action();
+    } finally {
+      delete bouton.dataset.occupe;
+      if (lib && avant !== null) lib.textContent = avant;
+    }
+  }
+
+  // ---- fil ----
+  const fil = document.getElementById("fil");
+  function rendreFil() {
+    const liste = parcours();
+    fil.textContent = "";
+    liste.forEach((id, i) => {
+      const bloc = document.createElement("div");
+      const place = liste.indexOf(etat.pas);
+      bloc.className = "pas" + (id === etat.pas ? " active" : (i < place ? " faite" : ""));
+      const rond = document.createElement("div");
+      rond.className = "rond";
+      rond.textContent = i < place ? "✓" : String(i + 1);
+      const nom = document.createElement("div");
+      nom.className = "nom";
+      nom.textContent = NOMS[id];
+      bloc.append(rond, nom);
+      if (i < liste.length - 1) { const b = document.createElement("div"); b.className="barre"; bloc.appendChild(b); }
+      fil.appendChild(bloc);
+    });
+  }
+
+  function aller(pas) {
+    etat.pas = pas;
+    for (const id of [0,1,2,3,4,5,6]) document.getElementById("e-" + id).hidden = id !== pas;
+    // L'ecran d'accueil n'est pas une etape du parcours : ni fil, ni boutons.
+    document.querySelector("header").hidden = pas === 0;
+    document.querySelector("footer").hidden = pas === 0;
+    document.getElementById("b-retour").hidden = pas === parcours()[0] || pas === 6;
+    majSuivant(); rendreFil();
+    document.querySelector("main").scrollTop = 0;
+  }
+
+  function suivantDe(pas) {
+    const l = parcours(); const i = l.indexOf(pas);
+    return l[Math.min(i + 1, l.length - 1)];
+  }
+  function precedentDe(pas) {
+    const l = parcours(); const i = l.indexOf(pas);
+    return l[Math.max(i - 1, 0)];
+  }
+
+  function majSuivant() {
+    const b = document.getElementById("b-suivant");
+    const lib = b.querySelector(".libelle");
+    const nomDomaine = etat.zone;
+    const par = {
+      1: [!etat.source, "Suivant"],
+      2: [!etat.connecte, "Suivant"],
+      3: [!nomDomaine, "Suivant"],
+      4: [!etat.configFaite, "Vérifier"],
+      5: [false, "Terminer"],
+      6: [false, "Recommencer"]
+    }[etat.pas];
+    // L'accueil (pas 0) n'a pas de pied de page : rien a mettre a jour.
+    if (!par) return;
+    b.disabled = par[0];
+    lib.textContent = par[1];
+  }
+
+  function avis(id, texte, genre) {
+    const e = document.getElementById(id);
+    e.className = "avis visible a-" + genre;
+    e.textContent = texte;
+  }
+  const cacherAvis = (id) => { document.getElementById(id).className = "avis"; };
+
+  document.getElementById("b-retour").addEventListener("click", () => aller(precedentDe(etat.pas)));
+
+  document.getElementById("b-suivant").addEventListener("click", async () => {
+    if (etat.pas === 1) { preparerParcours(); const n = suivantDe(1); if (n === 2) await preparerEtape2(); if (n === 3) await preparerEtape3(); aller(n); }
+    else if (etat.pas === 2) { await preparerEtape3(); aller(3); }
+    else if (etat.pas === 3) {
+      document.getElementById("rappel-domaine").textContent = etat.zone.nom;
+      aller(4);
+    }
+    else if (etat.pas === 4) { aller(5); lancerVerification(); }
+    else if (etat.pas === 5) { remplirFin(); aller(6); }
+    else { etat.zone = null; etat.configFaite = false; aller(1); }
+  });
+
+  // ---- etape 1 : source ----
+  const zoneSources = document.getElementById("sources");
+  for (const s of SOURCES) {
+    const b = document.createElement("button");
+    b.className = "opt"; b.disabled = !s.pret; b.setAttribute("aria-pressed","false");
+    const t = document.createElement("div");
+    const titre = document.createElement("div"); titre.className = "titre"; titre.textContent = s.titre;
+    if (s.marque) { const m=document.createElement("span"); m.className="marque "+s.marque[1]; m.textContent=s.marque[0]; titre.appendChild(m); }
+    if (!s.pret) { const m=document.createElement("span"); m.className="marque"; m.textContent="bientôt"; titre.appendChild(m); }
+    const desc = document.createElement("div"); desc.className="desc"; desc.textContent = s.desc;
+    t.append(titre, desc);
+    const c = document.createElement("div"); c.className="coche"; c.textContent="✓";
+    b.append(t, c);
+    b.addEventListener("click", () => {
+      etat.source = s.id;
+      for (const a of document.querySelectorAll(".opt")) a.setAttribute("aria-pressed","false");
+      b.setAttribute("aria-pressed","true");
+      const mot = {
+        possede: "L'application va configurer ce domaine sur ton compte Cloudflare.",
+        euorg: "eu.org fonctionne différemment : l'application prépare tout, mais c'est toi qui déposeras la demande sur leur site."
+      }[s.id];
+      avis("av-source", mot, "info");
+      majSuivant(); rendreFil();
+    });
+    zoneSources.appendChild(b);
+  }
+
+  document.getElementById("lien-autre").addEventListener("click", () => {
+    const zone = document.getElementById("autre-detail");
+    if (!zone.hidden) { zone.hidden = true; return; }
+    zone.hidden = false;
+    if (zone.childElementCount) return;
+
+    const b = document.createElement("button");
+    b.className = "opt";
+    b.setAttribute("aria-pressed", "false");
+    const t = document.createElement("div");
+    const titre = document.createElement("div");
+    titre.className = "titre"; titre.textContent = SOURCE_DISCRETE.titre;
+    const m = document.createElement("span");
+    m.className = "marque m-lent"; m.textContent = "Lent";
+    titre.appendChild(m);
+    const desc = document.createElement("div");
+    desc.className = "desc"; desc.textContent = SOURCE_DISCRETE.desc;
+    t.append(titre, desc);
+    const c = document.createElement("div"); c.className = "coche"; c.textContent = "✓";
+    b.append(t, c);
+    b.addEventListener("click", () => {
+      etat.source = SOURCE_DISCRETE.id;
+      for (const a of document.querySelectorAll("#sources .opt")) a.setAttribute("aria-pressed","false");
+      b.setAttribute("aria-pressed","true");
+      avis("av-source", "eu.org fonctionne différemment : l'application prépare tout, mais c'est toi qui déposeras la demande sur leur site.", "info");
+      majSuivant(); rendreFil();
+    });
+    zone.appendChild(b);
+  });
+
+  function preparerParcours() {
+    const euorg = etat.source === "euorg";
+    document.getElementById("bloc-possede").hidden = euorg;
+    document.getElementById("bloc-nom-euorg").hidden = !euorg;
+    document.getElementById("titre-nom").textContent =
+      euorg ? "Compose ton nom en .eu.org" : "Choisis ton domaine";
+    document.getElementById("intro-nom").textContent =
+      euorg ? "L'application crée la zone tout de suite : eu.org exige qu'elle réponde avant d'accepter la demande."
+      : "C'est l'adresse que les gens taperont dans leur navigateur.";
+  }
+
+  async function preparerEtape3() {
+    if (etat.source === "possede") await chargerDomaines();
+    if (etat.source === "euorg") await chargerParents();
+  }
+
+  // ---- etape 2 : compte ----
+
+  // Sans identifiant de client OAuth, ce bouton ne peut pas aboutir. Plutot que
+  // de laisser quelqu'un buter dessus, on le retire et on met en avant la voie
+  // par jeton, qui marche pour tout le monde.
+  async function preparerEtape2() {
+    const e = await window.app.cloudflare.etat();
+    if (e.oauthPossible) return;
+    const bloc = document.getElementById("b-connexion").closest(".bloc");
+    if (bloc) bloc.hidden = true;
+    const l = document.querySelector('label[for="jeton"]');
+    if (l) l.textContent = "Colle ton jeton d'API Cloudflare";
+    const aide = document.getElementById("jeton").closest(".bloc").querySelector(".aide");
+    if (aide) aide.textContent =
+      "À créer dans ton espace Cloudflare (Mon profil › Jetons d'API). Le README indique les autorisations exactes.";
+  }
+
+  document.getElementById("b-connexion").addEventListener("click", async (ev) => {
+    cacherAvis("av-connexion");
+    const r = await occuper(ev.currentTarget, "En attente dans le navigateur…",
+      () => window.app.cloudflare.connecterOAuth());
+    if (r.ok) { etat.connecte = true; avis("av-connexion","Compte connecté.","ok"); majSuivant(); }
+    else avis("av-connexion", r.message, "ko");
+  });
+
+  document.getElementById("b-jeton").addEventListener("click", async (ev) => {
+    const champ = document.getElementById("jeton");
+    cacherAvis("av-connexion");
+    const r = await occuper(ev.currentTarget, "Vérification…",
+      () => window.app.cloudflare.connecterJeton(champ.value));
+    if (r.ok) { etat.connecte = true; champ.value=""; avis("av-connexion","Jeton accepté.","ok"); majSuivant(); }
+    else avis("av-connexion", r.message, "ko");
+  });
+
+  // ---- etape 3 : domaine possede ----
+  async function chargerDomaines() {
+    const zone = document.getElementById("liste-domaines");
+    zone.textContent = "";
+    const r = await window.app.cloudflare.resume();
+    for (const z of (r.ok ? r.zones : [])) {
+      const b = document.createElement("button");
+      b.className = "opt"; b.setAttribute("aria-pressed", String(etat.zone?.id === z.id));
+      const t = document.createElement("div");
+      const titre = document.createElement("div"); titre.className="titre"; titre.textContent = z.nom;
+      const desc = document.createElement("div"); desc.className="desc";
+      desc.textContent = z.statut === "active" ? "actif" : "en attente — le domaine ne pointe pas encore vers Cloudflare";
+      t.append(titre, desc);
+      const c = document.createElement("div"); c.className="coche"; c.textContent="✓";
+      b.append(t, c);
+      b.addEventListener("click", () => {
+        etat.zone = z;
+        for (const a of zone.querySelectorAll(".opt")) a.setAttribute("aria-pressed","false");
+        b.setAttribute("aria-pressed","true");
+        majSuivant();
+      });
+      zone.appendChild(b);
+    }
+  }
+
+  document.getElementById("b-ajouter").addEventListener("click", async (ev) => {
+    const nom = document.getElementById("nouveau").value.trim();
+    if (!nom) return;
+    cacherAvis("av-domaine");
+
+    await occuper(ev.currentTarget, "Vérification…", async () => {
+      const dispo = await window.app.domaine.estLibre(nom);
+      if (dispo.dejaAToi) { avis("av-domaine", `${nom} est déjà dans ta liste ci-dessus.`, "info"); await chargerDomaines(); return; }
+      const r = await window.app.domaine.creerZone(nom);
+      if (!r.ok) { avis("av-domaine", r.message, "ko"); return; }
+      avis("av-domaine", `${nom} ajouté.`, "ok");
+      document.getElementById("nouveau").value = "";
+      etat.zone = r.zone;
+      await chargerDomaines();
+      majSuivant();
+    });
+  });
+
+  // ---- etape 3 : eu.org ----
+  const eupseudo = document.getElementById("eu-pseudo");
+  const euparent = document.getElementById("eu-parent");
+
+  async function chargerParents() {
+    if (euparent.options.length) return;
+    const liste = await window.app.euorg.parents();
+    for (const p of liste) {
+      const o = document.createElement("option");
+      o.value = p.valeur; o.textContent = p.libelle;
+      euparent.appendChild(o);
+    }
+    euparent.value = liste.find((p) => p.valeur === "fr.eu.org") ? "fr.eu.org" : liste[0].valeur;
+    majApercu();
+  }
+
+  function nomEuorg() {
+    const p = eupseudo.value.trim().toLowerCase().replace(/[^a-z0-9-]/g, "");
+    return p ? `${p}.${euparent.value}` : "";
+  }
+
+  function majApercu() {
+    const n = nomEuorg();
+    document.getElementById("eu-apercu").innerHTML =
+      "Ton domaine sera : <span class='mono'>" + (n || "—") + "</span>";
+    document.getElementById("eu-garde").textContent = euparent.value === "eu.org"
+      ? "Attention : une demande directement sous eu.org peut être refusée par principe. Une famille comme fr.eu.org passe bien mieux."
+      : "";
+  }
+  eupseudo.addEventListener("input", majApercu);
+  euparent.addEventListener("change", majApercu);
+
+  document.getElementById("b-eu-creer").addEventListener("click", async (ev) => {
+    const nom = nomEuorg();
+    if (!nom) { avis("av-domaine", "Saisis d'abord un nom.", "att"); return; }
+    cacherAvis("av-domaine");
+
+    await occuper(ev.currentTarget, "Préparation…", async () => {
+      const dispo = await window.app.domaine.estLibre(nom);
+      if (dispo.dejaAToi) { avis("av-domaine", `${nom} est déjà préparé sur ton compte.`, "info"); }
+      else if (dispo.libre === false) { avis("av-domaine", `${nom} est déjà pris : ${dispo.raison}.`, "att"); return; }
+
+      const r = await window.app.domaine.creerZone(nom);
+      if (!r.ok) { avis("av-domaine", r.message, "ko"); return; }
+      etat.zone = r.zone;
+      avis("av-domaine", `${nom} préparé. La demande officielle se fera à la dernière étape.`, "ok");
+      majSuivant();
+    });
+  });
+
+  // Suggestions de noms pour le champ eu.org.
+  const idees = document.getElementById("idees-nom");
+  function proposerIdees(base) {
+    const racine = (base || "").replace(/[^a-z0-9-]/gi, "").toLowerCase();
+    const annee = new Date().getFullYear();
+    const liste = racine
+      ? [racine, racine + "-dev", racine + "-app", racine + annee, "mon" + racine]
+      : ["mon-site", "mon-projet", "mon-portfolio", "mon-labo", "chez-moi"];
+    idees.textContent = "";
+    for (const v of liste) { const o = document.createElement("option"); o.value = v; idees.appendChild(o); }
+  }
+  document.getElementById("eu-pseudo").addEventListener("focus", (e) => proposerIdees(e.target.value));
+
+  // ---- etape 4 : destination ----
+  etat.cible = "tunnel";
+  for (const b of document.querySelectorAll("#choix-cible .opt")) {
+    b.addEventListener("click", () => {
+      etat.cible = b.dataset.cible;
+      for (const a of document.querySelectorAll("#choix-cible .opt")) a.setAttribute("aria-pressed", "false");
+      b.setAttribute("aria-pressed", "true");
+      document.getElementById("bloc-tunnel").hidden = etat.cible !== "tunnel";
+      document.getElementById("bloc-ip").hidden = etat.cible !== "ip";
+    });
+  }
+
+  window.app.tunnel.surProgression((p) => {
+    const e = document.getElementById("tunnel-progres");
+    e.hidden = false;
+    e.textContent = `Téléchargement de l'outil de tunnel : ${p} %`;
+    if (p >= 100) e.textContent = "Vérification de la signature du programme…";
+  });
+
+  document.getElementById("b-tunnel").addEventListener("click", async (ev) => {
+    const port = document.getElementById("port").value.trim();
+    if (!/^\d+$/.test(port)) { avis("av-tunnel", "Indique un numéro de port, par exemple 8080.", "att"); return; }
+    cacherAvis("av-tunnel");
+
+    const schema = document.getElementById("tunnel-https").checked ? "https" : "http";
+    const service = `${schema}://localhost:${port}`;
+
+    await occuper(ev.currentTarget, "Mise en place…", async () => {
+      const r = await window.app.tunnel.monter(etat.zone.id, etat.zone.nom, etat.zone.nom, service);
+      document.getElementById("tunnel-progres").hidden = true;
+      if (!r.ok) { avis("av-tunnel", r.message, "ko"); return; }
+
+      etat.tunnel = r;
+      etat.configFaite = true;
+      etat.ip = service;
+      avis("av-tunnel",
+        `Tunnel actif : ${etat.zone.nom} arrive sur ${service}. Aucun port n'a été ouvert.`, "ok");
+      majSuivant();
+    });
+  });
+
+  document.getElementById("b-config").addEventListener("click", async (ev) => {
+    const ip = document.getElementById("ip").value.trim();
+    if (!ip) { avis("av-config", "Indique l'adresse de ton serveur.", "att"); return; }
+    cacherAvis("av-config");
+
+    await occuper(ev.currentTarget, "Configuration…", async () => {
+      const proxie = document.getElementById("proxy").checked;
+      const type = ip.includes(":") ? "AAAA" : "A";
+      const noms = ["@"];
+      if (document.getElementById("avec-www").checked) noms.push("www");
+
+      const echecs = [];
+      for (const n of noms) {
+        const r = await window.app.domaine.ajouter(etat.zone.id, { type, nom:n, contenu:ip, proxie });
+        if (!r.ok) echecs.push(`${n} : ${r.message}`);
+      }
+      if (echecs.length) { avis("av-config", echecs.join(" — "), "ko"); return; }
+      etat.configFaite = true; etat.ip = ip;
+      avis("av-config", "Configuré. On peut vérifier.", "ok");
+      majSuivant();
+    });
+  });
+
+  // ---- etape 5 : verification ----
+  async function lancerVerification(bouton) {
+    const dl = document.getElementById("recap-verif");
+    const faire = async () => {
+      dl.textContent = "";
+      avis("av-verif", "Interrogation des serveurs…", "info");
+
+      const ligne = (k, v) => {
+        const d = document.createElement("div");
+        const dt = document.createElement("dt"); dt.textContent = k;
+        const dd = document.createElement("dd"); dd.textContent = v;
+        d.append(dt, dd); dl.appendChild(d);
+      };
+
+      const { rapport, delegation } = await window.app.domaine.verifier(
+        etat.zone.nom, etat.zone.serveursDeNoms || []
+      );
+      etat.rapport = rapport; etat.delegation = delegation;
+
+      ligne("Domaine", etat.zone.nom);
+      ligne("Serveurs interrogés", `${rapport.reussis} sur ${rapport.total} répondent correctement`);
+
+      if (etat.tunnel) {
+        const t = await window.app.tunnel.sante(etat.tunnel.tunnelId);
+        ligne("Tunnel", t.ok ? `${t.statut === "healthy" ? "actif" : t.statut} — ${t.connexions} connexion(s)` : "état inconnu");
+        ligne("Sert", etat.tunnel.service);
+      }
+      if (rapport.ignores) ligne("Non testé", `${rapport.ignores} adresses IPv6 — ta connexion n'a pas d'IPv6`);
+
+      const euorg = etat.source === "euorg";
+      document.getElementById("bloc-euorg").hidden = !euorg || !rapport.conforme;
+
+      if (euorg && rapport.conforme) {
+        document.getElementById("eu-ns").textContent = (etat.zone.serveursDeNoms || []).join("\n");
+      }
+
+      if (delegation.deleguee) avis("av-verif", "Tout est bon : ton domaine est en ligne.", "ok");
+      else if (rapport.conforme && euorg) avis("av-verif", "La zone répond correctement. Tu peux déposer ta demande chez eu.org.", "ok");
+      else if (rapport.conforme) avis("av-verif",
+        "La configuration est correcte, mais le domaine ne pointe pas encore vers Cloudflare. Indique ces serveurs chez celui qui t'a fourni le domaine : "
+        + (etat.zone.serveursDeNoms || []).join(", "), "att");
+      else avis("av-verif", "Certains serveurs ne répondent pas comme prévu. Regarde le détail technique.", "ko");
+    };
+
+    return bouton ? occuper(bouton, "Interrogation…", faire) : faire();
+  }
+
+  document.getElementById("b-reverifier").addEventListener("click", (ev) => lancerVerification(ev.currentTarget));
+  document.getElementById("b-euorg").addEventListener("click", async (ev) => {
+    cacherAvis("av-euorg");
+    await occuper(ev.currentTarget, "Fenêtre eu.org ouverte…", async () => {
+      const r = await window.app.euorg.formulaire(etat.zone.nom, etat.zone.serveursDeNoms || []);
+      if (!r.ok) {
+        if (r.annule) { avis("av-euorg", "Fenêtre fermée. Tu pourras recommencer plus tard.", "info"); return; }
+        avis("av-euorg", r.message, "ko");
+        return;
+      }
+      etat.euorgEnvoyee = true;
+      avis("av-euorg", "Demande envoyée. Il ne reste plus qu'à attendre leur relecture.", "ok");
+    });
+  });
+
+  function ligne2(dl, k, v) {
+    const d = document.createElement("div");
+    const dt = document.createElement("dt"); dt.textContent = k;
+    const dd = document.createElement("dd"); dd.textContent = v;
+    d.append(dt, dd); dl.appendChild(d);
+  }
+
+
+  // ---- etape 6 ----
+  function remplirFin() {
+    const dl = document.getElementById("recap-fin");
+    dl.textContent = "";
+    const ligne = (k, v) => {
+      const d = document.createElement("div");
+      const dt = document.createElement("dt"); dt.textContent = k;
+      const dd = document.createElement("dd"); dd.textContent = v;
+      d.append(dt, dd); dl.appendChild(d);
+    };
+    ligne("Domaine", etat.zone.nom);
+    document.getElementById("bloc-fin-tunnel").hidden = !etat.tunnel;
+    if (etat.tunnel) {
+      ligne("Pointe vers", etat.tunnel.service + " par tunnel");
+      ligne("Ports ouverts", "aucun");
+    } else if (etat.ip) {
+      ligne("Pointe vers", etat.ip);
+    }
+    if (etat.source === "euorg" && !etat.delegation?.deleguee) {
+      ligne("État", "en attente de validation par eu.org");
+      ligne("À faire", "déposer la demande sur nic.eu.org, puis patienter");
+    } else {
+      ligne("État", etat.delegation?.deleguee ? "en ligne" : "en attente de délégation");
+      if (!etat.delegation?.deleguee) {
+        ligne("À faire", "indiquer " + (etat.zone.serveursDeNoms || []).join(" et ") + " chez ton fournisseur de domaine");
+      }
+    }
+  }
+
+  document.getElementById("b-tunnel-stop").addEventListener("click", async (ev) => {
+    await occuper(ev.currentTarget, "Arrêt…", () => window.app.tunnel.arreter());
+    ev.currentTarget.querySelector(".libelle").textContent = "Tunnel arrêté";
+    ev.currentTarget.disabled = true;
+  });
+
+  // ---- ecran d'accueil ----
+  // Retour a la ligne pour les comptes rendus multi-lignes (.avis est en pre-line).
+  const SAUT = String.fromCharCode(10);
+
+  async function chargerAccueil() {
+    const a = await window.app.accueil();
+    const zone = document.getElementById("liste-accueil");
+    zone.textContent = "";
+
+    if (!a.connecte || !a.domaines.length) return false;
+
+    for (const d of a.domaines) {
+      // Carte cliquable. Ce n'est pas un <button> : elle en contient un.
+      const b = document.createElement("div");
+      b.className = "opt";
+      b.tabIndex = 0;
+      b.setAttribute("role", "button");
+
+      const t = document.createElement("div");
+      const titre = document.createElement("div");
+      titre.className = "titre";
+      titre.textContent = d.nom;
+
+      const m = document.createElement("span");
+      if (d.deleguee) { m.className = "marque m-vite"; m.textContent = "en ligne"; }
+      else { m.className = "marque m-lent"; m.textContent = "en attente"; }
+      titre.appendChild(m);
+
+      if (d.tunnelConnu) {
+        const mt = document.createElement("span");
+        mt.className = "marque";
+        mt.textContent = a.tunnelEnMarche ? "tunnel actif" : "tunnel arrêté";
+        titre.appendChild(mt);
+      }
+
+      const desc = document.createElement("div");
+      desc.className = "desc";
+      desc.textContent = d.deleguee
+        ? "Le domaine pointe bien vers Cloudflare."
+        : d.nom.endsWith(".eu.org")
+          ? "Vérification de ta demande chez eu.org…"
+          : "Le domaine ne pointe pas encore vers Cloudflare : indique " +
+            (d.serveursDeNoms || []).join(" et ") + " chez ton fournisseur.";
+
+      // Ce que le clic sur la carte doit faire : soit reprendre le parcours,
+      // soit ouvrir eu.org (pour s'y connecter ou y deposer la demande).
+      let actionEuorg = null;
+
+      if (!d.deleguee && d.nom.endsWith(".eu.org")) {
+        window.app.euorg.verifier(d.nom).then((v) => {
+          if (!v.ok) { desc.textContent = "Impossible de vérifier chez eu.org : " + v.message; return; }
+          if (v.connexionRequise) {
+            actionEuorg = "connexion";
+            desc.textContent = "Session eu.org expirée : clique ici pour t'y reconnecter, la vérification reprendra ensuite.";
+            const m2 = document.createElement("span");
+            m2.className = "marque"; m2.textContent = "à vérifier";
+            titre.appendChild(m2);
+            return;
+          }
+          const compte = v.handle ? " (compte " + v.handle + ")" : "";
+          if (v.deposee) {
+            desc.textContent = "Trouvé chez eu.org" + compte
+              + ". Leur traitement est manuel : de quelques jours à plusieurs semaines.";
+          } else {
+            // Nuance qui compte : on a lu la liste d'UN compte. Un domaine
+            // demande sous un autre identifiant eu.org n'y figure pas.
+            actionEuorg = "depot";
+            desc.textContent = "N'apparaît pas dans la liste du compte eu.org" + compte
+              + ". Si tu l'as demandé avec un autre identifiant, connecte-toi avec celui-là ;"
+              + " sinon clique ici pour déposer la demande.";
+            const m2 = document.createElement("span");
+            m2.className = "marque m-lent"; m2.textContent = "à déposer";
+            titre.appendChild(m2);
+          }
+        });
+      }
+      t.append(titre, desc);
+      b.appendChild(t);
+
+      // --- retirer -----------------------------------------------------------
+      // Suppression irreversible : elle se fait en deux temps, et le second
+      // temps enonce exactement ce qui va disparaitre.
+      const actions = document.createElement("div");
+      actions.className = "actions";
+      const bRetirer = document.createElement("button");
+      bRetirer.className = "mini";
+      bRetirer.textContent = "Retirer";
+      actions.appendChild(bRetirer);
+      b.appendChild(actions);
+
+      bRetirer.addEventListener("click", (ev) => {
+        ev.stopPropagation();
+        actions.textContent = "";
+
+        const quoi = ["la zone " + d.nom + " et tous ses enregistrements DNS"];
+        if (d.tunnelConnu) quoi.push("le tunnel créé par l'application, et son jeton");
+        desc.textContent = "Supprimer définitivement chez Cloudflare : " + quoi.join(", ") + "."
+          + (d.nom.endsWith(".eu.org")
+              ? " Le domaine chez eu.org, lui, se retire chez eux — l'application t'y emmènera."
+              : "");
+        desc.style.color = "var(--ko, #e2686d)";
+
+        const bOui = document.createElement("button");
+        bOui.className = "mini danger";
+        bOui.textContent = "Confirmer";
+        const bNon = document.createElement("button");
+        bNon.className = "mini";
+        bNon.textContent = "Annuler";
+        actions.append(bOui, bNon);
+
+        bNon.addEventListener("click", (e2) => { e2.stopPropagation(); chargerAccueil(); });
+
+        bOui.addEventListener("click", async (e2) => {
+          e2.stopPropagation();
+          bOui.disabled = bNon.disabled = true;
+          bOui.textContent = "Suppression…";
+
+          const r = await window.app.demanteler(d.id, d.nom);
+          const detail = (r.etapes || [])
+            .map((s) => (s.ok ? "✓ " : "✗ ") + s.quoi + (s.message ? " — " + s.message : ""))
+            .join(SAUT);
+          avis("av-accueil", (r.ok ? "Retiré de Cloudflare." : "Retrait incomplet.") + (detail ? SAUT + detail : ""),
+               r.ok ? "ok" : "ko");
+
+          if (r.euorg) {
+            const bEu = document.createElement("button");
+            bEu.className = "second";
+            bEu.style.marginTop = "10px";
+            bEu.innerHTML = '<span class="libelle">Retirer aussi ' + d.nom + ' chez eu.org</span>';
+            bEu.addEventListener("click", async () => {
+              bEu.disabled = true;
+              await window.app.euorg.espace(d.nom);
+              bEu.remove();
+            });
+            document.getElementById("av-accueil").appendChild(bEu);
+          }
+          chargerAccueil();
+        });
+      });
+
+      const ouvrir = async () => {
+        // eu.org d'abord : sans session valide ni demande deposee, le reste
+        // du parcours ne sert a rien.
+        if (actionEuorg) {
+          avis("av-accueil",
+            actionEuorg === "connexion"
+              ? "Connecte-toi dans la fenêtre eu.org : l'application ne lit pas ton mot de passe."
+              : "Remplis la demande dans la fenêtre eu.org.", "info");
+          const r = await window.app.euorg.formulaire(d.nom, d.serveursDeNoms || []);
+          if (r.annule) avis("av-accueil", "Fenêtre eu.org fermée.", "info");
+          else if (!r.ok) avis("av-accueil", r.message, "ko");
+          else avis("av-accueil", "eu.org : c'est envoyé.", "ok");
+          chargerAccueil();
+          return;
+        }
+        if (d.tunnelConnu && !a.tunnelEnMarche) {
+          avis("av-accueil", "Relance du tunnel…", "info");
+          const r = await window.app.tunnel.relancer(d.nom);
+          avis("av-accueil", r.ok ? `Tunnel relancé pour ${d.nom}.` : r.message, r.ok ? "ok" : "ko");
+          chargerAccueil();
+          return;
+        }
+        // Sinon on reprend le parcours sur ce domaine, a l'etape Destination.
+        etat.source = "possede";
+        etat.zone = { id: d.id, nom: d.nom, statut: d.statut, serveursDeNoms: d.serveursDeNoms };
+        etat.connecte = true;
+        document.getElementById("rappel-domaine").textContent = d.nom;
+        preparerParcours();
+        aller(4);
+      };
+
+      b.addEventListener("click", ouvrir);
+      b.addEventListener("keydown", (ev) => {
+        if (ev.key === "Enter" || ev.key === " ") { ev.preventDefault(); ouvrir(); }
+      });
+      zone.appendChild(b);
+    }
+    return true;
+  }
+
+  document.getElementById("b-nouveau").addEventListener("click", () => aller(1));
+
+  // Revenir a la liste des domaines depuis n'importe quelle etape. On
+  // recharge : l'etat a pu changer pendant le parcours.
+  document.getElementById("b-accueil").addEventListener("click", async () => {
+    cacherAvis("av-accueil");
+    aller(0);
+    if (!(await chargerAccueil())) aller(1);
+  });
+
+  // ---- detail technique ----
+  const journal = document.getElementById("journal");
+  function ajouterLigne(l) {
+    const d = document.createElement("div"); d.className = "l";
+    const t = document.createElement("time");
+    t.textContent = new Date(l.t).toLocaleTimeString("fr-FR", { hour12:false });
+    const s = document.createElement("span");
+    s.className = "txt n-" + l.niveau;
+    s.textContent = l.message + (l.details ? " " + JSON.stringify(l.details) : "");
+    d.append(t, s);
+    journal.appendChild(d);
+    journal.scrollTop = journal.scrollHeight;
+  }
+  window.app.surJournal(ajouterLigne);
+  document.getElementById("lien-detail").addEventListener("click", () => { document.getElementById("detail").hidden = false; });
+  document.getElementById("b-fermer-detail").addEventListener("click", () => { document.getElementById("detail").hidden = true; });
+
+  // ---- demarrage ----
+  (async () => {
+    const initial = await window.app.etatInitial();
+    for (const l of initial.journal) ajouterLigne(l);
+    etat.connecte = initial.cloudflare.connecte;
+
+    // Le jeton OAuth ne vit qu'une heure : le dire clairement plutot que de
+    // laisser echouer le premier appel avec un message obscur.
+    if (initial.cloudflare.oauthExpire === true) {
+      avis("av-connexion", "Ta connexion Cloudflare a expiré — reconnecte-toi, c'est un clic.", "att");
+    } else if (etat.connecte) {
+      avis("av-connexion", "Déjà connecté — " + initial.cloudflare.libelle, "ok");
+    }
+
+    rendreFil(); majSuivant();
+
+    // S'il y a deja des domaines, on montre leur etat au lieu de renvoyer
+    // l'utilisateur dans l'assistant depuis le debut.
+    const aDesDomaines = etat.connecte ? await chargerAccueil() : false;
+    aller(aDesDomaines ? 0 : 1);
+  })();
+</script>
+</body>
+</html>

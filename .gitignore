@@ -1,0 +1,12 @@
+# Secrets : ne doit JAMAIS partir sur un depot.
+.env.local
+
+# Dependances et sorties de travail
+node_modules/
+rapport.json
+*.log
+
+# Prototypes d'exploration : ils ont servi a valider les choix techniques,
+# ils ne font pas partie de l'application livree.
+proto-cloudflare/
+proto-webview/
